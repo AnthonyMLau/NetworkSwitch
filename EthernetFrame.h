@@ -17,8 +17,8 @@
 
 class EthernetFrame{
     public:
-        static const int vlanQ = VLAN_802_1Q;
-        static const int vlanAD = VLAN_802_1AD;
+        // static const int vlanQ = VLAN_802_1Q;
+        // static const int vlanAD = VLAN_802_1AD;
 
         EthernetFrame();
         ~EthernetFrame();
@@ -26,8 +26,7 @@ class EthernetFrame{
         void Serialize();
         bool VlanTagExists();
         bool IsEtherType();
-        
-
+        bool IsIPv6();
 
     private:
         MACAddress destination;

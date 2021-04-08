@@ -5,5 +5,9 @@ EthernetFrame::EthernetFrame(){
 }
 
 bool EthernetFrame::VlanTagExists(){
-    return (etherTypeOrLength == vlanQ) || (etherTypeOrLength == vlanAD);
+    return (etherTypeOrLength == VLAN_802_1Q) || (etherTypeOrLength == VLAN_802_1AD);
+}
+
+bool EthernetFrame::IsIPv6(){
+    return etherTypeOrLength == IPv6;
 }
