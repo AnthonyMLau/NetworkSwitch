@@ -49,14 +49,16 @@ int main(){
     }
 
 
+    // start timer
     clock_t t;
     t = clock();
 
     togglePin(fd);
 
+    // stop timer
     t = clock() - t;
     double seconds = ((float)t)/CLOCKS_PER_SEC;
-    printf("Time taken in seconds: %f, aka %f MHz", seconds, 1000000/seconds/1000000);
+    printf("Time taken in seconds: %f, aka %f MHz", seconds, 1/seconds);
     
 
 

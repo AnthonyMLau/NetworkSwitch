@@ -69,28 +69,43 @@ int main(void)
         if (res != MRAA_SUCCESS)
 		goto err;
 
+
+	// start timer
+	clock_t t;
+    t = clock();
+
+
 	/* toggle both gpio's */
-	while (flag) {
+	for(int i=0; i < 1000000; i++) {
 		res = mraa_gpio_write(gpio_1, 1);
 		if (res != MRAA_SUCCESS)
 			goto err;
 
-                res = mraa_gpio_write(gpio_2, 0);
-                if (res != MRAA_SUCCESS)
-                        goto err;
+                // res = mraa_gpio_write(gpio_2, 0);
+                // if (res != MRAA_SUCCESS)
+                //         goto err;
 		
-		sleep(1);
+		// sleep(1);
 
                 res = mraa_gpio_write(gpio_1, 0);
                 if (res != MRAA_SUCCESS)
                         goto err;
 
-                res = mraa_gpio_write(gpio_2, 1);
-                if (res != MRAA_SUCCESS)
-                        goto err;
+                // res = mraa_gpio_write(gpio_2, 1);
+                // if (res != MRAA_SUCCESS)
+                //         goto err;
 
-		sleep(1);
+		// sleep(1);
 	}
+
+
+
+
+	// stop timer
+    t = clock() - t;
+    double seconds = ((float)t)/CLOCKS_PER_SEC;
+    printf("Time taken in seconds: %f, aka %f MHz", seconds, 1/seconds);
+
 
 	/* release gpio's */
 	res = mraa_gpio_close(gpio_1);
