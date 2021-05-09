@@ -5,38 +5,64 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string.h>
 
-void exportPin(int pin, int fd){
-    //int fd = open("/sys/class/gpio/export", O_WRONLY);
+
+void exportPin(int pin){
+    int fd;
+    char buf[100];
+    //Export the specific GPIO
+    //this will create a new folder with the gpio name
+    sprintf(buf, "%d", pin);
+    fd = open("/sys/class/gpio/export", O_WRONLY);
+    if (fd < 0){
+        perror("Unable to open /sys/class/gpio/export");
+    }
+    write(fd, buf, strlen(buf));
+    close(fd);
+    return;
+}
+
+void setDirectionOut(int pin){
+    // Set the pin to be an output by writing "out" to /sys/class/gpio/gpio24/direction
+    int fd;
+    char buf[100];
+    //Set the direction of the GPIO to output
+    sprintf(buf, "/sys/class/gpio/gpio%d/direction", pin);
+    fd = open(buf, O_WRONLY);
+    if (fd < 0){
+        perror("Unable to open /sys/class/gpio/export");
+    }
+    write(fd, "out", 3); // Set out direction
+    close(fd);
+}
+
+void setDirectionIn(int fd, int pin){
+    // Set the pin to be an output by writing "in" to /sys/class/gpio/gpio24/direction
+    int fd;
+    char buf[100];
+    //Set the direction of the GPIO to output
+    sprintf(buf, "/sys/class/gpio/gpio%d/direction", pin);
+    fd = open(buf, O_WRONLY);
+    if (fd < 0){
+        perror("Unable to open /sys/class/gpio/export");
+    }
+    write(fd, "in", 2); // Set in direction
+    close(fd);
+}
+
+void writePin(int fd, int pin, char val){
     if (fd == -1) {
         perror("Unable to open /sys/class/gpio/export");
-        exit(1);
+        return;
     }
-    if (write(fd, "418", 3) != 3) { //TODO fix hardcoded stuff
-        perror("Error writing to /sys/class/gpio/export");
-        exit(1);
-    }
-    //close(fd);
+    write(fd, &val, 1);
 }
 
-void setDirection(int pin, int fd){
-    // Set the pin to be an output by writing "out" to /sys/class/gpio/gpio24/direction
-    //fd = open("/sys/class/gpio/gpio418/direction", O_WRONLY);
+void readPin(int fd, int pin, char &val){
     if (fd == -1) {
-        perror("Unable to open /sys/class/gpio/gpio24/direction");
-        exit(1);
+        perror("Unable to open /sys/class/gpio/export");
+        return;
     }
-    if (write(fd, "out", 3) != 3) {
-        perror("Error writing to /sys/class/gpio/gpio418/direction");
-        exit(1);
-    }
-    //close(fd);
-}
-
-void writePin(){
-    
-}
-
-void readPin(){
-    
+    read(fd, &val, 1);
 }
