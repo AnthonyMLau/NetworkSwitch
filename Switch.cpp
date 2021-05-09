@@ -6,12 +6,25 @@
 
 #include "EthernetFrame.h"
 #include "MACAddress.h"
+#include "gpioFileSystem.h"
 
 #define MAXPORTS 10
+#define pinA 418
 
 int addressTable[MAXPORTS][2];
 
+void readFile(bool &buf, int len){
+    for (int i = 0; i < len; i++)
+        buf[i] = readPin();
+    }
+    
+}
+
 void *readInputSignals(void * arg){
+    //read 64 bits - preamble + SFD (TODO)
+
+    //detect start of frame
+
     //get destination and source addr
     //get and allocate size
     //write data into mem
@@ -38,6 +51,10 @@ void setup(){
         }
     }
     
+    //pin setup
+    int fd = open("/sys/class/gpio/export", O_WRONLY);
+    exportPin(418, fd);
+    setDirection(418, fd);
 }
 
 int main (int argc, char *argv[]){
