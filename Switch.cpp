@@ -7,28 +7,33 @@
 #include "EthernetFrame.h"
 #include "MACAddress.h"
 #include "gpioFileSystem.h"
+#include "circular_queue.h"
 
 #define MAXPORTS 10
-#define pinA 418
+#define pinIn 418
+#define pinOut 394
+#define BUFFER_SIZE 10000
 
 int addressTable[MAXPORTS][2];
+CircularQueue buffers[MAXPORTS];
 
-void readFile(bool &buf, int len){
-    for (int i = 0; i < len; i++)
-        buf[i] = readPin();
-    }
+
+
+// template <size_t rows, size_t cols>
+// void readFile(bool (&buf)[rows][cols], int len){
+//     for (int i = 0; i < len; i++){
+//         buf[i] = readPin();
+//     }
     
-}
+// }
 
 void *readInputSignals(void * arg){
     //read 64 bits - preamble + SFD (TODO)
-
-    //detect start of frame
-
-    //get destination and source addr
-    //get and allocate size
-    //write data into mem
+    
+    
     //put in process buffer
+
+    //For now, to test logic I will just use a big array with random values and some ethernet frames instead of reading input signals
 
 }
 
@@ -36,7 +41,24 @@ void *writeOutputSignals(void * arg){
     //write bits to correct port/pin
 }
 
+// TODO: fix args
 void *processData(void * arg){
+    int in_port = *(int*)(arg);
+    free(arg);
+
+    //detect start of frame (use a FSM to detect match the start of frame sequence)
+    char prev = -1;
+    char curr = -1;
+    int count = 0;
+    while(true){ //7 of 0xAA, aka 21 pairs of 0b10
+        curr = buffers[in_port].popFront();
+        if(curr == 1 && prev == -1){
+            count = 1;
+        }else if ((curr == 1 && prev == 0) || (curr == 0 && prev == 1)){
+            count += 1;
+        }
+    }
+
     //compare data and find correct output port
     //put in output buffer
 
@@ -52,9 +74,11 @@ void setup(){
     }
     
     //pin setup
-    int fd = open("/sys/class/gpio/export", O_WRONLY);
-    exportPin(418, fd);
-    setDirection(418, fd);
+    exportPin(pinIn);
+    setDirectionOut(pinIn);
+
+    exportPin(pinOut);
+    setDirectionIn(pinOut);
 }
 
 int main (int argc, char *argv[]){
@@ -63,15 +87,22 @@ int main (int argc, char *argv[]){
 
     setup();
 
+    for (size_t i = 0; i < MAXPORTS; i++){
+        buf_arrs[i] = CircularQueue(BUFFER_SIZE);
+    }
+    
+
+    
+
     // todo: set thread affinity to separate cores for input and output
     // todo: multiple i/o for multiple signals 
-    pthread_t input;
-    pthread_t output;
-    pthread_t analyze;
+    // pthread_t input;
+    // pthread_t output;
+    // pthread_t analyze;
 
-    pthread_create(&input, NULL, readInputSignals, NULL);
-    pthread_create(&input, NULL, writeOutputSignals, NULL);
-    pthread_create(&input, NULL, processData, NULL);
+    // pthread_create(&input, NULL, readInputSignals, NULL);
+    // pthread_create(&input, NULL, writeOutputSignals, NULL);
+    // pthread_create(&input, NULL, processData, NULL);
 
     
 }
