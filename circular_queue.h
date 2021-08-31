@@ -7,12 +7,22 @@ class CircularQueue{
         int start;
         int end;
         char* buf;
+        CircularQueue();
         CircularQueue(int maximumSize);
         char insertRear(char val);
         char popFront();
         bool isEmpty();
         bool isFull();
 };
+
+CircularQueue::CircularQueue(){
+    this->maxSize = 0;
+    this->currSize = 0;
+    this->start = -1;
+    this->end = -1;
+    this->buf = NULL;
+}
+
 
 CircularQueue::CircularQueue(int maximumSize){
     this->maxSize = maximumSize;

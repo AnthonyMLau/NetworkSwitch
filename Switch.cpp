@@ -1,7 +1,8 @@
 #include <map>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <thread>
+#include <algorithm>
 
 
 #include "EthernetFrame.h"
@@ -14,8 +15,12 @@
 #define pinOut 394
 #define BUFFER_SIZE 10000
 
-int addressTable[MAXPORTS][2];
-CircularQueue buffers[MAXPORTS];
+int connectedPorts[MAXPORTS] = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0};
+
+long long int addressTable[MAXPORTS]; //addressTable[port] = mac addr
+CircularQueue in_buffers[MAXPORTS];
+CircularQueue out_buffers[MAXPORTS];
+std::thread threads[MAXPORTS];
 
 
 
@@ -41,23 +46,61 @@ void *writeOutputSignals(void * arg){
     //write bits to correct port/pin
 }
 
-// TODO: fix args
-void *processData(void * arg){
-    int in_port = *(int*)(arg);
-    free(arg);
 
-    //detect start of frame (use a FSM to detect match the start of frame sequence)
+// TODO: fix args
+void *processData(int in_port){
+
+
+    //detect start of frame with FSM
     char prev = -1;
     char curr = -1;
     int count = 0;
-    while(true){ //7 of 0xAA, aka 21 pairs of 0b10
-        curr = buffers[in_port].popFront();
-        if(curr == 1 && prev == -1){
-            count = 1;
-        }else if ((curr == 1 && prev == 0) || (curr == 0 && prev == 1)){
+    while(count < 64){
+        prev = curr;
+        curr = in_buffers[in_port].popFront();
+
+        // detect last "1" which is a consecutive 1
+        if(count == 63 && curr == 1 && prev == 1){
             count += 1;
+        }else{
+            continue;
+        }
+
+        if ((curr == 1 && prev == 0) || (curr == 0 && prev == 1)){
+            count += 1;
+        }else if(curr == 1){
+            count = 1;
+        }else{
+            count = 0;
         }
     }
+
+    // read source and destination addresses (6 octets each)
+    long long int source_addr = 0;
+    for (size_t i = 0; i < (6*8); i++){
+        source_addr += (bool) in_buffers[in_port].popFront();
+        source_addr <<= 1;
+    }
+    addressTable[in_port] = source_addr;
+
+    long long int dest_addr = 0;
+    for (size_t i = 0; i < (6*8); i++){
+        dest_addr += (bool) in_buffers[in_port].popFront();
+        dest_addr <<= 1;
+    }
+    
+    //search address table
+    long long int* item = std::find(std::begin(addressTable), std::end(addressTable), source_addr);
+
+    if(item == std::end(addressTable)){
+        // address not found, broadcast to all ports
+        broadcastData();
+    }else{
+        int index = std::distance(addressTable, item);
+        sendData(addressTable[index]);
+    }
+
+    
 
     //compare data and find correct output port
     //put in output buffer
@@ -67,10 +110,7 @@ void *processData(void * arg){
 void setup(){
     // fill all values in addressTable to 0
     for (int i = 0; i < MAXPORTS; i++){
-        for (int j = 0; j < 2; j++)
-        {
-            addressTable[i][j] = 0;
-        }
+            addressTable[i] = 0;
     }
     
     //pin setup
@@ -88,7 +128,7 @@ int main (int argc, char *argv[]){
     setup();
 
     for (size_t i = 0; i < MAXPORTS; i++){
-        buf_arrs[i] = CircularQueue(BUFFER_SIZE);
+        in_buffers[i] = CircularQueue(BUFFER_SIZE);
     }
     
 
@@ -96,13 +136,17 @@ int main (int argc, char *argv[]){
 
     // todo: set thread affinity to separate cores for input and output
     // todo: multiple i/o for multiple signals 
-    // pthread_t input;
-    // pthread_t output;
-    // pthread_t analyze;
-
-    // pthread_create(&input, NULL, readInputSignals, NULL);
-    // pthread_create(&input, NULL, writeOutputSignals, NULL);
-    // pthread_create(&input, NULL, processData, NULL);
-
+    for (size_t i = 0; i < MAXPORTS; i++){
+        if(connectedPorts[i]){
+            threads[i] = std::thread(processData, i);
+        }
+    }
+    
+    for (size_t i = 0; i < MAXPORTS; i++){
+        if(connectedPorts[i]){
+            threads[i].join();
+        }
+    }
+    
     
 }
