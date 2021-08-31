@@ -37,7 +37,7 @@ void setDirectionOut(int pin){
     close(fd);
 }
 
-void setDirectionIn(int fd, int pin){
+void setDirectionIn(int pin){
     // Set the pin to be an output by writing "in" to /sys/class/gpio/gpio24/direction
     int fd;
     char buf[100];
