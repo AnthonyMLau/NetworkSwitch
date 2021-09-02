@@ -17,7 +17,7 @@
 
 ## Benchmarking
 - Write to /sys/class/gpio/gpio---/value using write(), which writes to the file
-    - Debian: ~48 KHz => maximum bit rate = 24 kBit/sec => might be sufficient for 10BASE-T
+    - Debian: ~48 KHz => maximum bit rate = 24 kBit/sec
     - Ubuntu core: ~23 KHz => maximum bit rate = 11.5 kBit/sec
 - Could probably be much faster if I can read/write to the memory mapped register 
 
